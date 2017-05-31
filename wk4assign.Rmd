@@ -1,0 +1,71 @@
+---
+title: "Comparing Auto vs Manual"
+date: "31/05/2017"
+output: ioslides_presentation
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+Comparing Auto vs Manual Transmission
+=====================================
+### Updated: `r as.Date(Sys.Date(),format="%a %d %m %y")`
+
+## Comparing Auto vs Manual
+
+Using the mtcars dataset our interractive Ap allows the user to choose a parameter and view the data interractively. The Ap will evalualte linear models to compare how accurately your selection is predicted using all remaining variables and compare it with a prediction that uses a standard set of variables (HP, Weight and Transmission Type).
+
+Models that explain a lower percentage of the variables will be innacurate when used in prediction.
+
+
+## An Interractive Exert of the Ap
+
+```{r echo=FALSE, warning=FALSE}
+suppressMessages(library(shiny))
+suppressMessages(library(GGally))
+suppressMessages(library(plotly))
+suppressMessages(library(tidyr))
+suppressMessages(library(dplyr))
+data(mtcars)
+mtcars$am <- factor(mtcars$am,labels=c('Automatic','Manual'))
+sidebarLayout(
+      sidebarPanel(
+        radioButtons("col", "Select a parameter to compare Auto and Manual Transmission Types:",
+               c("MPG" = 1,
+                 "Cylinders" = 2,
+                 "Displ" = 3,
+                 "HP" = 4,
+                 "Drat" = 5,
+                 "Weight" = 6,
+                 "QSec" = 7,
+                 "Gears" = 10,
+                 "Carbs" = 11))
+        ),
+    mainPanel(
+        renderPlotly({
+        # draw the boxplot of Auto vs Manual cars for the chosen variable
+        plot_ly(mtcars,x=mtcars$am,y=mtcars[,as.integer(input$col)],type="box",color=mtcars$am)
+        })
+    ))
+    renderText({ paste("The Automatic mean value of ",
+                round(mean(mtcars[mtcars$am=="Automatic",as.integer(input$col)]),2),
+                " and Manual mean value of ",
+                round(mean(mtcars[mtcars$am=="Manual",as.integer(input$col)]),2),
+                ". The linear model using all variables to predict your selection explains ",
+                round(summary(lm(as.formula(paste(colnames(mtcars)[as.integer(input$col)], "~",
+                                       paste(colnames(mtcars)[c(-as.integer(input$col))], collapse = "+"),
+                                       sep = "")),data=mtcars))$r.squared * 100,2),
+                "% of the variables compared with ",
+                round(summary(lm(as.formula(paste(colnames(mtcars)[as.integer(input$col)], "~ hp + wt + factor(am)",sep="")),data=mtcars))$r.squared * 100,2),
+                "% from a model using HP WT and Transmission Type.",sep="")  
+            })
+```
+
+## Overview of the Ap
+
+Our Ap interractively allows the user to explore the mtcars dataset and see the spread of parameters. It also calculates linear models and informs as to how many variables are covered by the predictive model when selecting different parameters to predict.
+
+Our Ap provides a better approach than exploring the static plot outputs and more interractively gives a feel for the chosen mtcars dataset.
+
+I hope you also enjoyed the course!
